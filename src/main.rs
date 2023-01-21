@@ -1,48 +1,42 @@
-use std::io::{self};
-use wasapi::{initialize_mta, Device, DeviceCollection, Direction};
+use std::{sync::mpsc, thread};
+use wasapi::initialize_mta;
 
-fn select_device(direction: &Direction) -> Device {
-    let devices = DeviceCollection::new(direction).unwrap();
-
-    let number_of_devices = devices.get_nbr_devices().unwrap();
-
-    match direction {
-        Direction::Capture => {
-            println!("Found {} input devices", number_of_devices)
-        }
-        Direction::Render => {
-            println!("Found {} output devices", number_of_devices)
-        }
-    }
-
-    for index in 0..number_of_devices {
-        let device = devices.get_device_at_index(index).unwrap();
-
-        println!("{}: {}", index, device.get_friendlyname().unwrap());
-    }
-
-    let mut user_select = String::new();
-
-    println!("Choose device (enter index)");
-
-    io::stdin()
-        .read_line(&mut user_select)
-        .expect("Failed to read line");
-
-    devices
-        .get_device_at_index(user_select.trim().parse().unwrap())
-        .unwrap()
-}
+pub mod audio_utils;
+pub mod input;
+pub mod output;
 
 fn main() {
     initialize_mta().unwrap();
 
-    let output_device = select_device(&Direction::Render);
-    let input_device = select_device(&Direction::Capture);
+    let (tx_play, rx_play): (
+        std::sync::mpsc::SyncSender<Vec<u8>>,
+        std::sync::mpsc::Receiver<Vec<u8>>,
+    ) = mpsc::sync_channel(2);
+    let (tx_capt, rx_capt): (
+        std::sync::mpsc::SyncSender<Vec<u8>>,
+        std::sync::mpsc::Receiver<Vec<u8>>,
+    ) = mpsc::sync_channel(2);
 
-    println!(
-        "Input: {} \r\nOutput: {}",
-        input_device.get_friendlyname().unwrap(),
-        output_device.get_friendlyname().unwrap()
-    );
+    // Playback
+    let _handle = thread::Builder::new()
+        .name("Player".to_string())
+        .spawn(move || {
+            output::playback(rx_play);
+        });
+
+    // Capture
+    let _handle = thread::Builder::new()
+        .name("Capture".to_string())
+        .spawn(move || {
+            input::capture(tx_capt);
+        });
+
+    loop {
+        match rx_capt.recv() {
+            Ok(chunk) => {
+                tx_play.send(chunk).unwrap();
+            }
+            Err(err) => println!("Some error {}", err),
+        }
+    }
 }

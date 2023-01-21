@@ -1,2 +1,10 @@
-Idea is to try to create some kind of guitar plugin. We will see if that happens...
-Right now it can only read audio devices and prompt user to select correct input and output
+# My distortion box
+
+## Idea
+
+Make a standalone guitar plugin with somekind of distortion effect
+
+## Features so far:
+
+- Select proper audio devices for input and output :white_check_mark:
+- Hear guitar played to input :white_check_mark:
