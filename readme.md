@@ -1,5 +1,3 @@
-# My distortion box
-
 ## Idea
 
 Make a standalone guitar plugin with somekind of distortion effect
