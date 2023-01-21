@@ -1,5 +1,3 @@
-use std::sync::mpsc;
-
 use wasapi::Direction;
 
 use crate::audio_utils::init_audio_client;
@@ -16,23 +14,9 @@ pub fn playback(rx_play: std::sync::mpsc::Receiver<Vec<u8>>) {
         let buffer_space_available = audio_client.get_available_space_in_frames().unwrap();
 
         while sample_queue.len() < (blockalign as usize * buffer_space_available as usize) {
-            match rx_play.try_recv() {
-                Ok(chunk) => {
-                    for element in chunk.iter() {
-                        sample_queue.push_back(*element);
-                    }
-                }
-                Err(mpsc::TryRecvError::Empty) => {
-                    for _ in 0..((blockalign as usize * buffer_space_available as usize)
-                        - sample_queue.len())
-                    {
-                        sample_queue.push_back(0);
-                    }
-                }
-                Err(_) => {
-                    println!("error");
-
-                    break;
+            if let Ok(c) = rx_play.try_recv() {
+                for element in c.iter() {
+                    sample_queue.push_back(*element);
                 }
             }
         }
