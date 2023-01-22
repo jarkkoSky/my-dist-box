@@ -11,14 +11,19 @@ pub fn capture(tx_capt: std::sync::mpsc::SyncSender<Vec<u8>>) {
 
     loop {
         while sample_queue.len() > (blockalign as usize * CHUNK_SIZE as usize) {
-            let mut chunk = vec![0u8; blockalign as usize * CHUNK_SIZE as usize];
+            // Create empty chunk
+            let mut chunk = vec![0; blockalign as usize * CHUNK_SIZE as usize];
 
+            // Move items from sample queue to chunk
             for element in chunk.iter_mut() {
                 *element = sample_queue.pop_front().unwrap();
             }
+
+            // Send chunk to channel
             tx_capt.send(chunk).unwrap();
         }
 
+        // Read audio from device to sample queue
         render_client
             .read_from_device_to_deque(blockalign as usize, &mut sample_queue)
             .unwrap();
