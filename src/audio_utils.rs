@@ -4,8 +4,8 @@ use wasapi::{
     AudioClient, Device, DeviceCollection, Direction, Handle, SampleType, ShareMode, WaveFormat,
 };
 
-pub const CHUNK_SIZE: u8 = 128;
-pub const SAMPLE_QUEUE_CAPACITY: usize = 2048;
+pub const CHUNK_SIZE: usize = 128;
+pub const SAMPLE_QUEUE_CAPACITY: usize = CHUNK_SIZE * 4;
 
 fn sample_queue_init() -> VecDeque<u8> {
     VecDeque::with_capacity(SAMPLE_QUEUE_CAPACITY)
@@ -34,7 +34,7 @@ pub fn init_audio_client(direction: &Direction) -> (AudioClient, Handle, u32, Ve
     let device = select_device(&direction);
 
     let mut audio_client = device.get_iaudioclient().unwrap();
-    let desired_format = WaveFormat::new(32, 32, &SampleType::Float, 44100, 2);
+    let desired_format = WaveFormat::new(16, 16, &SampleType::Int, 44100, 2);
 
     let blockalign = desired_format.get_blockalign();
     let (_, min_time) = audio_client.get_periods().unwrap();
@@ -42,7 +42,7 @@ pub fn init_audio_client(direction: &Direction) -> (AudioClient, Handle, u32, Ve
     audio_client
         .initialize_client(
             &desired_format,
-            min_time as i64,
+            min_time,
             direction,
             &ShareMode::Shared,
             true,

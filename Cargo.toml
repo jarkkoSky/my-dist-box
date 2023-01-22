@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 wasapi = "0.12.0"
+kanal = "0.1.0-pre7"

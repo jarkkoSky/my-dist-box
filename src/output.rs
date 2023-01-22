@@ -1,8 +1,9 @@
+use kanal::Receiver;
 use wasapi::Direction;
 
 use crate::audio_utils::init_audio_client;
 
-pub fn playback(rx_play: std::sync::mpsc::Receiver<Vec<u8>>) {
+pub fn playback(rx_play: Receiver<Vec<u8>>) {
     let (audio_client, h_event, blockalign, mut sample_queue) =
         init_audio_client(&Direction::Render);
 
@@ -14,7 +15,7 @@ pub fn playback(rx_play: std::sync::mpsc::Receiver<Vec<u8>>) {
         let buffer_space_available = audio_client.get_available_space_in_frames().unwrap();
 
         while sample_queue.len() < (blockalign as usize * buffer_space_available as usize) {
-            if let Ok(c) = rx_play.try_recv() {
+            if let Ok(c) = rx_play.recv() {
                 for element in c.iter() {
                     sample_queue.push_back(*element);
                 }

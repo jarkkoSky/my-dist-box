@@ -1,8 +1,9 @@
+use kanal::Sender;
 use wasapi::Direction;
 
 use crate::audio_utils::{init_audio_client, CHUNK_SIZE};
 
-pub fn capture(tx_capt: std::sync::mpsc::SyncSender<Vec<u8>>) {
+pub fn capture(tx_capt: Sender<Vec<u8>>) {
     let (audio_client, h_event, blockalign, mut sample_queue) =
         init_audio_client(&Direction::Capture);
 
